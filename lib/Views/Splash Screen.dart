@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import 'package:speeddetection/Views/HomeScreen.dart';
 
 class SplashScreen extends StatefulWidget {
+  final String route = 'Splash';
   const SplashScreen({super.key});
 
   @override
