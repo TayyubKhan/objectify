@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:speeddetection/Views/RecordScreen.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
@@ -56,17 +55,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _pickVideo(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
     final XFile? pickedFile =
-        await picker.pickVideo(source: ImageSource.gallery);
+    await picker.pickVideo(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       _disposeControllers();
 
       setState(() {
         video = File(pickedFile.path);
-        _initializeVideoPlayer(video!, context);
         isLoading = true;
         isCancelled = false;
       });
+
+      _initializeVideoPlayer(video!, context);
       await _uploadVideo(video!, context);
     }
   }
@@ -75,10 +75,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://192.168.0.183:5000/process'),
+        Uri.parse('http://192.168.1.57:5000/process_video'),  // Update the URL here
       );
       request.files
-          .add(await http.MultipartFile.fromPath('file', videoFile.path));
+          .add(await http.MultipartFile.fromPath('video', videoFile.path));  // Change 'file' to 'video'
 
       currentResponse = await request.send();
 
@@ -86,14 +86,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       if (currentResponse!.statusCode == 200) {
         var bytes = await currentResponse!.stream.toBytes();
-        
+
         // Get the temporary directory
         Directory tempDir = await getTemporaryDirectory();
         String filePath = p.join(tempDir.path, 'processed_video.mp4');
-        
+
         File processedVideo = File(filePath);
         await processedVideo.writeAsBytes(bytes);
-        
+
         _showSnackbar(context, 'Video saved at $filePath');
         _initializeProcessedVideoPlayer(processedVideo, context);
       } else {
@@ -112,7 +112,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _initializeVideoPlayer(File videoFile, BuildContext context) {
-    _videoController?.dispose();
+    if (_videoController != null) {
+      _videoController!.dispose();
+      _videoController = null;
+    }
+
     setState(() {
       _videoController = VideoPlayerController.file(videoFile)
         ..initialize().then((_) {
@@ -133,7 +137,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _initializeProcessedVideoPlayer(File videoFile, BuildContext context) {
-    _processedVideoController?.dispose();
+    if (_processedVideoController != null) {
+      _processedVideoController!.dispose();
+      _processedVideoController = null;
+    }
+
     setState(() {
       _processedVideoController = VideoPlayerController.file(videoFile)
         ..initialize().then((_) {
@@ -178,13 +186,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _processedVideoController = null;
   }
 
-  void _navigateToTextFileScreen(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const TextFileScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,18 +197,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           'Speed Detection',
           style: TextStyle(color: Colors.white),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.description,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              log('Navigating to text file screen');
-              _navigateToTextFileScreen(context);
-            },
-          ),
-        ],
       ),
       body: Center(
         child: Padding(
@@ -222,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
