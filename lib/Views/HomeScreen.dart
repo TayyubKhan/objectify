@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://192.168.1.57:5000/process_video'),  // Update the URL here
+        Uri.parse('http://192.168.1.8:5000/process_video'),  // Update the URL here
       );
       request.files
           .add(await http.MultipartFile.fromPath('video', videoFile.path));  // Change 'file' to 'video'
@@ -198,66 +198,68 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           style: TextStyle(color: Colors.white),
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  _pickVideo(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _pickVideo(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    'Pick Video',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),
-                child: const Text(
-                  'Pick Video',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
-              ),
-              if (isLoading)
-                Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    const SpinKitFadingCircle(
-                      color: Colors.deepPurple,
-                      size: 50.0,
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        _cancelProcess(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                if (isLoading)
+                  Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      const SpinKitFadingCircle(
+                        color: Colors.deepPurple,
+                        size: 50.0,
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          _cancelProcess(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 30),
-              if (_videoController != null &&
-                  _videoController!.value.isInitialized)
-                _buildVideoPlayerContainer(_videoController!),
-              const SizedBox(height: 20),
-              if (_processedVideoController != null &&
-                  _processedVideoController!.value.isInitialized)
-                _buildVideoPlayerContainer(_processedVideoController!),
-            ],
+                    ],
+                  ),
+                const SizedBox(height: 30),
+                if (_videoController != null &&
+                    _videoController!.value.isInitialized)
+                  _buildVideoPlayerContainer(_videoController!),
+                const SizedBox(height: 20),
+                if (_processedVideoController != null &&
+                    _processedVideoController!.value.isInitialized)
+                  _buildVideoPlayerContainer(_processedVideoController!),
+              ],
+            ),
           ),
         ),
       ),
@@ -271,8 +273,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(15),
       ),
       child: SizedBox(
-        width: 300,
-        height: 200,
         child: AspectRatio(
           aspectRatio: controller.value.aspectRatio,
           child: VideoPlayer(controller),
