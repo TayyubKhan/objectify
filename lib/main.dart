@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'Views/Splash Screen.dart';
+import 'Views/CameraDetectionScreen.dart';
 
 main() async {
  
@@ -12,6 +12,7 @@ main() async {
     ),
   );
 }
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return  MaterialApp(
       navigatorKey: navigatorKey,
-      home: const SplashScreen(),
+      home: const ObjectDetection(),
     );
   }
 }

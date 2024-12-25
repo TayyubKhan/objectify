@@ -1,20 +1,20 @@
-import 'dart:collection';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:typed_data';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'dart:async';
 import 'package:flutter_vision/flutter_vision.dart';
+
 late List<CameraDescription> cameras;
 
-class DetectionThroughCameraScreen extends StatefulWidget {
-  const DetectionThroughCameraScreen({super.key});
+class ObjectDetection extends StatefulWidget {
+  const ObjectDetection({super.key});
 
   @override
-  State<DetectionThroughCameraScreen> createState() => _DetectionThroughCameraScreenState();
+  State<ObjectDetection> createState() => _ObjectDetectionState();
 }
 
-class _DetectionThroughCameraScreenState extends State<DetectionThroughCameraScreen> {
+class _ObjectDetectionState extends State<ObjectDetection> {
   @override
   void initState() {
     super.initState();
@@ -107,25 +107,25 @@ class _YoloVideoState extends State<YoloVideo> {
             ),
             child: isDetecting
                 ? IconButton(
-              onPressed: () async {
-                stopDetection();
-              },
-              icon: const Icon(
-                Icons.stop,
-                color: Colors.red,
-              ),
-              iconSize: 50,
-            )
+                    onPressed: () async {
+                      stopDetection();
+                    },
+                    icon: const Icon(
+                      Icons.stop,
+                      color: Colors.red,
+                    ),
+                    iconSize: 50,
+                  )
                 : IconButton(
-              onPressed: () async {
-                await startDetection();
-              },
-              icon: const Icon(
-                Icons.play_arrow,
-                color: Colors.white,
-              ),
-              iconSize: 50,
-            ),
+                    onPressed: () async {
+                      await startDetection();
+                    },
+                    icon: const Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                    ),
+                    iconSize: 50,
+                  ),
           ),
         ),
       ],
@@ -146,7 +146,7 @@ class _YoloVideoState extends State<YoloVideo> {
 
   Future<void> yoloOnFrame(CameraImage cameraImage) async {
     List<Uint8List> bytesList =
-    cameraImage.planes.map((plane) => plane.bytes).toList();
+        cameraImage.planes.map((plane) => plane.bytes).toList();
 
     final result = await vision.yoloOnFrame(
         bytesList: bytesList,
@@ -184,98 +184,106 @@ class _YoloVideoState extends State<YoloVideo> {
     });
   }
 
-// A map to store previous positions and timestamps for detected objects
-  Map<String, Map<String, dynamic>> previousPositions = HashMap();
-
   List<Widget> displayBoxesAroundRecognizedObjects(Size screen) {
     if (yoloResults.isEmpty) return [];
     double factorX = screen.width / (cameraImage?.height ?? 1);
     double factorY = screen.height / (cameraImage?.width ?? 1);
 
     return yoloResults.map((result) {
-      String tag = result['tag'];
       double boxLeft = result["box"][0] * factorX;
       double boxTop = result["box"][1] * factorY;
       double boxWidth = (result["box"][2] - result["box"][0]) * factorX;
       double boxHeight = (result["box"][3] - result["box"][1]) * factorY;
 
+      double objectWidth;
       double realObjectWidth;
-      double realObectDistance;
+      double realObjectDistance;
       double perceivedObjectWidthInPixels;
-      const vehicleTags = {'car', 'truck', 'bus', 'motorcycle', 'van'};
 
-      if (vehicleTags.contains(tag)) {
-        realObjectWidth = 16; // Adjust this value as needed for vehicles
-        realObectDistance = 40; // Adjust this value as needed for vehicles
-        perceivedObjectWidthInPixels = 180.96644; // Adjust this value as needed for vehicles
+      switch (result['tag']) {
+        case 'bottle':
+          realObjectWidth = 8.0;
+          realObjectDistance = 60.0;
+          perceivedObjectWidthInPixels = 67.99305;
 
-        double focalLength = (perceivedObjectWidthInPixels * realObectDistance) / realObjectWidth;
-        double distanceToObject = (realObjectWidth * focalLength) / boxWidth;
+          break;
+        case 'cup':
+          objectWidth = 8.0;
+          realObjectWidth = objectWidth;
+          realObjectDistance = objectWidth;
+          perceivedObjectWidthInPixels = screen.width;
 
-        // Get the current timestamp
-        DateTime currentTime = DateTime.now();
+          break;
+        case 'tv':
+          objectWidth = 52.0;
+          realObjectWidth = objectWidth;
+          realObjectDistance = objectWidth;
+          perceivedObjectWidthInPixels = screen.width;
 
-        // Calculate speed if previous data is available
-        double speedInCmPerSec = 0.0;
-        double speedInKmPerHour = 0.0;
-        if (previousPositions.containsKey(tag)) {
-          double previousDistance = previousPositions[tag]!['distance'];
-          DateTime previousTime = previousPositions[tag]!['timestamp'];
+          break;
+        case 'keyboard':
+          objectWidth = 44.0;
+          realObjectWidth = objectWidth;
+          realObjectDistance = objectWidth;
+          perceivedObjectWidthInPixels = screen.width;
 
-          // Calculate time difference in seconds
-          double timeDifference = currentTime.difference(previousTime).inMilliseconds / 1000.0;
+          break;
+        case 'person':
+          realObjectWidth = 46;
+          realObjectDistance = 150;
+          perceivedObjectWidthInPixels = 179.37023;
 
-          // Calculate speed: (change in distance / time difference)
-          if (timeDifference > 0) {
-            speedInCmPerSec = ((previousDistance - distanceToObject).abs()) / timeDifference;
-            speedInKmPerHour = speedInCmPerSec * 0.036; // Convert to km/h
-          }
-        }
+          break;
+        case 'book':
+          realObjectWidth = 16;
+          realObjectDistance = 40;
+          perceivedObjectWidthInPixels = 180.96644;
 
-        // Store the current distance and timestamp for the object
-        previousPositions[tag] = {
-          'distance': distanceToObject,
-          'timestamp': currentTime,
-        };
-
-        return Stack(
-          children: [
-            Positioned(
-              left: boxLeft,
-              top: boxTop,
-              width: boxWidth,
-              height: boxHeight,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.all(Radius.circular(10.0)),
-                  border: Border.all(color: Colors.pink, width: 2.0),
-                ),
-              ),
-            ),
-            Positioned(
-              left: boxLeft,
-              top: boxTop - 35,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 135, 0, 45).withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  "Speed: ${speedInKmPerHour.toStringAsFixed(2)*20} km/h",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      } else {
-        // For non-vehicle objects, return null or handle differently
-        return Container();
+          break;
+        default:
+          objectWidth = (boxWidth * boxHeight) / (screen.width);
+          realObjectWidth = objectWidth;
+          realObjectDistance = objectWidth / 2.5;
+          perceivedObjectWidthInPixels = screen.width;
       }
+
+      double focalLength =
+          (perceivedObjectWidthInPixels * realObjectDistance) / realObjectWidth;
+      double distanceToObject = (realObjectWidth * focalLength) / boxWidth;
+
+      return Stack(
+        children: [
+          Positioned(
+            left: boxLeft,
+            top: boxTop,
+            width: boxWidth,
+            height: boxHeight,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(10.0)),
+                border: Border.all(color: Colors.pink, width: 2.0),
+              ),
+            ),
+          ),
+          Positioned(
+            left: boxLeft,
+            top: boxTop - 35,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 135, 0, 45).withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(4)),
+              child: Text(
+                "${result['tag']} D: ${distanceToObject.toStringAsFixed(2)} cm",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
     }).toList();
   }
 }
