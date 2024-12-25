@@ -1,4 +1,4 @@
-package com.example.speeddetection
+package com.example.objectify
 
 import io.flutter.embedding.android.FlutterActivity
 
