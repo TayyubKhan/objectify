@@ -47,7 +47,7 @@ dependencies:
   path: ^1.9.0
   flutter_spinkit: ^5.2.1
   flutter_riverpod: ^2.5.1
-
+  flutter_vision:
 dev_dependencies:
   flutter_test:
     sdk: flutter
