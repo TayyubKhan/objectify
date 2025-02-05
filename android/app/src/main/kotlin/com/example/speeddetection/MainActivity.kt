@@ -1,4 +1,4 @@
-package com.example.objectify
+package com.app.learnito
 
 import io.flutter.embedding.android.FlutterActivity
 
